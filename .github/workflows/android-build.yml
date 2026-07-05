@@ -7,7 +7,6 @@ on:
 
 env:
   GODOT_VERSION: 4.6
-  EXPORT_NAME: start-car-blockly
 
 jobs:
   build-android:
@@ -26,7 +25,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Accept licenses & install NDK
+      - name: Accept licenses and install NDK
         run: |
           yes | sdkmanager --install 'build-tools;34.0.0' 'platforms;android-34' 'ndk;23.2.8568313' --sdk_root=$ANDROID_HOME 2>&1 || true
           yes | sdkmanager --licenses --sdk_root=$ANDROID_HOME 2>&1 || true
@@ -38,7 +37,7 @@ jobs:
           chmod +x Godot_v${GODOT_VERSION}-stable_linux.x86_64
           echo "GODOT_BIN=$(pwd)/Godot_v${GODOT_VERSION}-stable_linux.x86_64" >> $GITHUB_ENV
 
-      - name: Download Godot Android Export Templates
+      - name: Download Export Templates
         run: |
           wget -q https://github.com/godotengine/godot/releases/download/$GODOT_VERSION-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz
           mkdir -p ~/.local/share/godot/export_templates/${GODOT_VERSION}-stable
@@ -51,7 +50,7 @@ jobs:
       - name: Generate Keystore
         run: |
           keytool -genkey -v \
-            -keystore ${{ github.workspace }}/racing.keystore \
+            -keystore racing.keystore \
             -alias racing \
             -keyalg RSA \
             -keysize 2048 \
@@ -60,12 +59,12 @@ jobs:
             -keypass android \
             -dname "CN=Dev, OU=Dev, O=Dev, L=Dakar, SN=DK, C=SN"
 
-      - name: Build APK (debug)
+      - name: Build APK debug
         run: |
           mkdir -p build
           $GODOT_BIN --headless --export-debug "Android" build/racing-debug.apk
 
-      - name: Build APK (release)
+      - name: Build APK release
         run: |
           $GODOT_BIN --headless --export-release "Android" build/racing-release.apk
 
@@ -75,7 +74,3 @@ jobs:
           name: racing-android-apk
           path: build/
           if-no-files-found: error
-        with:
-          name: racing-web
-          path: build/web/
-          if-no-files-found: warn
