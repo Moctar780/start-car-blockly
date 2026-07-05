@@ -1,0 +1,81 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android build tools
+        run: |
+          sdkmanager --install 'build-tools;34.0.0' 'platforms;android-34' 'ndk;23.2.8568313' 'cmdline-tools;latest' --sdk_root=$ANDROID_HOME
+
+      - name: Download Godot 4.6
+        run: |
+          wget -q https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_linux.x86_64.zip
+          unzip -q Godot_v4.6-stable_linux.x86_64.zip
+          echo "GODOT_PATH=$(pwd)/Godot_v4.6-stable_linux.x86_64" >> $GITHUB_ENV
+
+      - name: Download Godot Android Export Templates
+        run: |
+          wget -q https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_export_templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/4.6-stable
+          unzip -q Godot_v4.6-stable_export_templates.tpz -d ~/.local/share/godot/export_templates/4.6-stable/
+          # Move templates up one level (removes the "templates/" subfolder)
+          mv ~/.local/share/godot/export_templates/4.6-stable/templates/* ~/.local/share/godot/export_templates/4.6-stable/
+          rm -rf ~/.local/share/godot/export_templates/4.6-stable/templates/
+          ls -la ~/.local/share/godot/export_templates/4.6-stable/
+
+      - name: Generate Keystore for APK signing
+        run: |
+          keytool -genkey -v \
+            -keystore racing.keystore \
+            -alias racing \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass android \
+            -keypass android \
+            -dname "CN=Moctar780, OU=Dev, O=Moctar780, L=Dakar, SN=DK, C=SN"
+
+      - name: Build Android APK (debug)
+        run: |
+          mkdir -p build
+          $GODOT_PATH --headless \
+            --export-debug "Android" \
+            build/racing-debug.apk
+
+      - name: Build Android APK (release)
+        run: |
+          $GODOT_PATH --headless \
+            --export-release "Android" \
+            build/racing-release.apk
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: racing-android-apk
+          path: |
+            build/racing-debug.apk
+            build/racing-release.apk
+          if-no-files-found: error
+        with:
+          name: racing-web
+          path: build/web/
+          if-no-files-found: warn
