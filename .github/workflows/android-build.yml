@@ -47,21 +47,14 @@ jobs:
             rm -rf ~/.local/share/godot/export_templates/${GODOT_VERSION}-stable/templates/
           fi
 
-      - name: Generate Keystore
-        run: keytool -genkey -v -keystore racing.keystore -alias racing -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Dev, OU=Dev, O=Dev, L=Dakar, SN=DK, C=SN"
-
-      - name: Build APK debug
+      - name: Build APK
         run: |
           mkdir -p build
           $GODOT_BIN --headless --export-debug "Android" build/racing-debug.apk
 
-      - name: Build APK release
-        run: |
-          $GODOT_BIN --headless --export-release "Android" build/racing-release.apk
-
-      - name: Upload APK artifacts
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: racing-android-apk
-          path: build/
+          path: build/racing-debug.apk
           if-no-files-found: error
