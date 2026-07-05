@@ -48,16 +48,7 @@ jobs:
           fi
 
       - name: Generate Keystore
-        run: |
-          keytool -genkey -v \
-            -keystore racing.keystore \
-            -alias racing \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass android \
-            -keypass android \
-            -dname "CN=Dev, OU=Dev, O=Dev, L=Dakar, SN=DK, C=SN"
+        run: keytool -genkey -v -keystore racing.keystore -alias racing -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Dev, OU=Dev, O=Dev, L=Dakar, SN=DK, C=SN"
 
       - name: Build APK debug
         run: |
